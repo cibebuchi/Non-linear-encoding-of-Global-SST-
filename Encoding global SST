@@ -1,0 +1,50 @@
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.optimizers import Adam
+from keras.callbacks import EarlyStopping
+
+
+# Replace 'your_data' with your actual SST data name
+Global_SST = your_data
+
+# Split the data into training (80%) and testing (20%)
+train_data, test_data = train_test_split(Global_SST, test_size=0.2, random_state=42)
+
+# Further split training data into training and validation sets (80% training, 20% validation)
+train_data, val_data = train_test_split(train_data, test_size=0.2, random_state=42)
+
+# Normalize the data
+scaler = MinMaxScaler(feature_range=(0, 1))
+train_scaled = scaler.fit_transform(train_data)
+val_scaled = scaler.transform(val_data)
+test_scaled = scaler.transform(test_data)
+
+# Hyperparameters
+input_neurons = output_neurons = train_scaled.shape[1]
+hidden_neurons = 64
+learning_rate = 0.001
+batch_size = 32
+epochs = 12
+patience = 2  # for early stopping
+
+# Build the autoencoder
+encoder = Sequential([Dense(hidden_neurons, activation='relu', input_shape=(input_neurons,))])
+decoder = Sequential([Dense(output_neurons, activation='sigmoid', input_shape=(hidden_neurons,))])
+autoencoder = Sequential([encoder, decoder])
+
+# Compile the autoencoder
+optimizer = Adam(learning_rate=learning_rate)
+autoencoder.compile(optimizer=optimizer, loss='mse')
+
+# Early stopping to halt training when validation loss increases
+early_stopping = EarlyStopping(monitor='val_loss', patience=patience, restore_best_weights=True)
+
+# Train the autoencoder
+autoencoder.fit(train_scaled, train_scaled, epochs=epochs, batch_size=batch_size, shuffle=True, 
+                validation_data=(val_scaled, val_scaled), callbacks=[early_stopping])
+
+# Get the encoded patterns using the trained encoder
+encoded_sst_data = encoder.predict(test_scaled)
