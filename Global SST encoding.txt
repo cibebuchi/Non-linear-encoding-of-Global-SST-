@@ -27,7 +27,7 @@ input_neurons = output_neurons = train_scaled.shape[1]
 hidden_neurons = 64
 learning_rate = 0.001
 batch_size = 32
-epochs = 12
+epochs = 50
 patience = 2  # for early stopping
 
 # Build the autoencoder
